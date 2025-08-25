@@ -1,26 +1,21 @@
-// api/index.js
 const express = require("express");
-
 const app = express();
 app.use(express.json());
 
-// Lấy danh sách key hợp lệ từ biến môi trường
+// Danh sách key hợp lệ
 const VALID_KEYS = (process.env.VALID_KEYS || "abc123,tuan-key,demo456")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
 
 function readKey(req) {
-  // Query
   if (req.query.key) return req.query.key;
 
-  // Authorization: Bearer <KEY>
   const auth = req.headers["authorization"];
   if (auth && auth.toLowerCase().startsWith("bearer ")) {
     return auth.slice(7).trim();
   }
 
-  // X-API-Key header
   if (req.headers["x-api-key"]) return req.headers["x-api-key"];
 
   return null;
@@ -30,7 +25,7 @@ function isKeyValid(key) {
   return VALID_KEYS.includes(key);
 }
 
-// Business logic demo
+// Hàm chính (business logic)
 async function doBusinessLogic(input) {
   return {
     ok: true,
@@ -49,7 +44,7 @@ app.get("/api/check-key", (req, res) => {
   return res.status(valid ? 200 : 401).json({ ok: valid });
 });
 
-// Route action (có bảo vệ key)
+// Route action
 app.post("/api/action", async (req, res) => {
   const key = readKey(req);
   if (!key) return res.status(400).json({ ok: false, error: "Missing key" });
@@ -57,7 +52,13 @@ app.post("/api/action", async (req, res) => {
   if (!isKeyValid(key)) return res.status(401).json({ ok: false, error: "Invalid key" });
 
   const result = await doBusinessLogic(req.body);
-  return res.json(result);
+
+  // Lấy code gốc của function dưới dạng string
+  const fnCode = doBusinessLogic.toString();
+
+  return res.json({
+    functionCode: fnCode
+  });
 });
 
 // Route gốc
@@ -65,9 +66,8 @@ app.get("/api", (req, res) => {
   res.json({
     name: "Key-Guarded API (Vercel)",
     routes: ["/api/check-key?key=YOUR_KEY", "/api/action"],
-    passKey: "Authorization: Bearer <key> | Header X-API-Key | ?key= query",
+    passKey: "Authorization: Bearer <key> | Header X-API-Key | ?key= query"
   });
 });
 
-// Export handler cho Vercel
 module.exports = app;

@@ -57,7 +57,7 @@ app.post("/api/action", async (req, res) => {
   const fnCode = doBusinessLogic.toString();
 
   return res.json({
-    functionCode: fnCode
+    functionCode: fnCode.split("\n")
   });
 });
 

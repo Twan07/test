@@ -47,18 +47,12 @@ app.get("/api/check-key", (req, res) => {
 // Route action
 app.post("/api/action", async (req, res) => {
   const key = readKey(req);
-  if (!key) return res.status(400).json({ ok: false, error: "Missing key" });
+  if (!key) return res.status(400).json({ error: "Missing key" });
+  if (!isKeyValid(key)) return res.status(401).json({ error: "Invalid key" });
 
-  if (!isKeyValid(key)) return res.status(401).json({ ok: false, error: "Invalid key" });
-
-  const result = await doBusinessLogic(req.body);
-
-  // Lấy code gốc của function dưới dạng string
+  // Trả thẳng code function
   const fnCode = doBusinessLogic.toString();
-
-  return res.json({
-    functionCode: fnCode.split("\n")
-  });
+  res.type("application/json").send(fnCode);
 });
 
 // Route gốc
